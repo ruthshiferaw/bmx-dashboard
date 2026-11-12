@@ -21,7 +21,7 @@ details.panel summary{cursor:pointer;font-weight:600;font-size:16px}details.pane
 <div class="panel"><div class="row"><label>Scenario <select id="preset"><option value="default">Default</option><option value="passive">No pumping</option><option value="mistimed">Shift COM along track</option><option value="lowrr">Low rolling resistance</option><option value="highrr">High rolling resistance</option><option value="lightbike">Lighter bike</option><option value="highpower">Higher ramp power</option><option value="highamp">Amplified COM motion</option><option value="custom">Custom</option></select></label><button id="play">Play</button><button id="reset">Reset playback</button><label style="flex:1;min-width:200px">Playback <input id="seek" type="range" min="0" max="1000" value="0"></label><label>Playback rate <select id="rate"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label></div>
 <div class="row" style="margin-top:12px"><button id="freeze">Set current as baseline</button><button id="load">Load baseline</button><button id="restore">Restore default baseline</button><span class="muted" id="baselineName">Baseline: default</span></div></div>
 <div class="panel"><label>Choose cyclist <select id="cyclistName"><option value="sleeman_p1">P1 — Last place</option><option value="sleeman_p2">P2 — Second-to-last place</option><option value="sleeman_p3">P3 — First place</option></select></label> <span class="muted" id="cyclistLoaded"></span></div><details class="panel"><summary>COM motion processing</summary><h2>COM motion processing</h2><p class="muted">Measured COM motion is smoothed using a 15-frame Savitzky–Golay filter, mapped to track position using video landmarks, and fitted with a cubic smoothing spline (8 mm RMS target). The same spatial spline supplies the COM position and derivatives used in the dynamics.</p></details><div id="status" class="notice">Loading model data…</div><div class="row" id="metrics" style="margin-top:15px"></div>
-<div class="panel"><h2>Track, rider and speed</h2><p class="muted">The ramp is hidden when include_ramp is false. Both plots use the same track-distance axis. Playback and modeled speed stop at the last contact-tracked COM frame when configured.</p><svg id="track" viewBox="0 0 1000 330" role="img" aria-label="Track profile and animated rider"></svg><svg id="speed" viewBox="0 0 1000 250" role="img" aria-label="Speed comparison"></svg><p class="muted">Green curve: smooth velocity <em>estimate</em> obtained by differentiating a shape-preserving cubic position–time interpolation through measured video landmarks. Intermediate velocities are inferred, not directly measured. Video-speed bridging and sector comparisons still use the original measured interval averages.</p><div class="legend"><span><i class="swatch" style="background:#59b5ff"></i>Current</span><span><i class="swatch" style="background:#f6ba72"></i>Frozen baseline</span><span><i class="swatch" style="background:#ee7189"></i>Non-contact zones</span><span><i class="swatch" style="background:#6fe2b0"></i>Observed velocity</span></div></div>
+<div class="panel"><h2>Track, rider and speed</h2><p class="muted">The ramp is hidden when include_ramp is false. Both plots use the same track-distance axis. Playback and modeled speed stop at the last contact-tracked COM frame when configured.</p><svg id="track" viewBox="0 0 1000 330" role="img" aria-label="Track profile and animated rider"></svg><svg id="speed" viewBox="0 0 1000 250" role="img" aria-label="Speed comparison"></svg><p class="muted">Green: estimated observed velocity from the landmark position–time cubic interpolation. Blue (Current) and orange (Frozen baseline): cubic splines through their simulated velocities sampled at the <strong>same landmark positions</strong> as the green curve. Gray: the full-resolution current simulation. These landmark-matched curves compare like positions; intermediate values are interpolated, not additional measurements. Video-speed bridging and interval-average comparisons remain unchanged.</p><div class="legend"><span><i class="swatch" style="background:#59b5ff"></i>Current</span><span><i class="swatch" style="background:rgba(225,232,242,0.35)"></i>Fully calculated velocity</span><span><i class="swatch" style="background:#f6ba72"></i>Frozen baseline</span><span><i class="swatch" style="background:#ee7189"></i>Non-contact zones</span><span><i class="swatch" style="background:#6fe2b0"></i>Observed velocity</span></div></div>
 <div class="columns"><div class="panel"><h2>Live forces and power</h2><div id="live" class="muted">—</div><h2 style="margin-top:24px">Rider and team parameters</h2><div class="controls" id="controls"></div></div><div class="panel"><div class="com-overlay" id="comOverlayPanel"><h2>COM motion over the terrain</h2><p class="muted">Fixed vertical scale: 0–3.7 m, relative to the lowest point of the roller terrain. This display offset does not alter the dynamics.</p>
 <p class="muted">The gray line is the actual roller terrain. Blue is the measured COM profile at its original position and amplitude; orange is the COM profile for the current slider settings. All three use the same height scale. COM displacement is projected along the terrain normal.</p>
 <svg id="comSpatial" viewBox="0 0 1000 320" role="img" aria-label="Terrain and reference and adjusted COM trajectories versus roller distance"></svg>
@@ -90,6 +90,58 @@ function qterms(localX,pr){
        if(Number.isFinite(pos)&&Number.isFinite(vel))videoVelocityEstimate.push({x:data.roller_start_x+pos,speed:Math.max(0,vel)});
      }
    }
+ }
+ // Sample both simulations at the observed landmark boundaries, then use a
+ // natural cubic spline through those identical x coordinates for visual comparison.
+ // These are instantaneous model velocities, NOT interval-average velocities.
+ function speedAtX(rows,x){
+   if(x<rows[0].x-1e-7||x>rows.at(-1).x+1e-7)return NaN;
+   if(x<=rows[0].x)return rows[0].speed;
+   if(x>=rows.at(-1).x)return rows.at(-1).speed;
+   let lo=0,hi=rows.length-1;
+   while(hi-lo>1){let mid=(lo+hi)>>1;if(rows[mid].x<x)lo=mid;else hi=mid;}
+   const a=rows[lo],b=rows[hi],f=(x-a.x)/(b.x-a.x);
+   return a.speed+f*(b.speed-a.speed);
+ }
+ function landmarkPositions(){
+   const intervals=data.measured_intervals||[];
+   if(!intervals.length)return [];
+   return [intervals[0].x_start_m,...intervals.map(z=>z.x_end_m)]
+     .map(x=>data.roller_start_x+Number(x));
+ }
+ function splineAtLandmarks(rows){
+   const xs=landmarkPositions().filter(x=>x>=rows[0].x-1e-7&&x<=rows.at(-1).x+1e-7);
+   const knots=xs.map(x=>({x,speed:speedAtX(rows,x)})).filter(z=>Number.isFinite(z.speed));
+   const n=knots.length;
+   if(n<2)return [];
+   const h=Array.from({length:n-1},(_,i)=>knots[i+1].x-knots[i].x);
+   if(h.some(v=>v<=0))return [];
+   // Natural cubic spline: second derivative is zero at the two endpoints.
+   const second=new Array(n).fill(0);
+   if(n>2){
+     const a=[],b=[],c=[],d=[];
+     for(let i=1;i<n-1;i++){
+       a.push(h[i-1]);b.push(2*(h[i-1]+h[i]));c.push(h[i]);
+       d.push(6*((knots[i+1].speed-knots[i].speed)/h[i]-(knots[i].speed-knots[i-1].speed)/h[i-1]));
+     }
+     for(let i=1;i<b.length;i++){
+       const factor=a[i]/b[i-1];b[i]-=factor*c[i-1];d[i]-=factor*d[i-1];
+     }
+     second[n-2]=d.at(-1)/b.at(-1);
+     for(let i=n-3;i>=1;i--)second[i]=(d[i-1]-c[i-1]*second[i+1])/b[i-1];
+   }
+   const result=[];
+   for(let i=0;i<n-1;i++){
+     const dx=h[i],samples=20;
+     for(let j=0;j<=samples;j++){
+       if(i&&j===0)continue;
+       const u=j/samples,left=1-u,right=u;
+       const speed=left*knots[i].speed+right*knots[i+1].speed+
+         (second[i]*(left**3-left)+second[i+1]*(right**3-right))*dx*dx/6;
+       result.push({x:knots[i].x+u*dx,speed});
+     }
+   }
+   return result;
  }
 function videoSpeed(x){
   const z=data.measured_intervals,xx=x-data.roller_start_x;
@@ -267,7 +319,7 @@ function path(rows,fx,fy,step=10){return rows.filter((_,i)=>i%step===0||i===rows
 function draw(r){const g=data.geometry,showRamp=data.include_ramp!==false,xMin=showRamp?g.x[0]:data.roller_start_x,xMax=g.x.at(-1),trackRows=g.x.map((x,i)=>({x,y:g.y[i]})).filter(z=>z.x>=xMin-1e-9),minY=Math.min(...g.y),maxY=Math.max(...g.y),X=x=>65+890*(x-xMin)/Math.max(1e-9,xMax-xMin),Y=y=>285-220*(y-minY)/(maxY-minY+1);let svg=`<line x1="45" y1="290" x2="955" y2="290" stroke="#51617a"/><path d="${path(trackRows,z=>X(z.x),z=>Y(z.y),6)}" fill="none" stroke="#b7c6d7" stroke-width="3"/><line x1="${X(data.roller_start_x)}" y1="25" x2="${X(data.roller_start_x)}" y2="290" stroke="#677a94" stroke-dasharray="5 5"/><text x="${X(data.roller_start_x)+8}" y="22">Rollers begin</text><line x1="${X(current[0].x)}" y1="25" x2="${X(current[0].x)}" y2="290" stroke="#8bd3ff" stroke-dasharray="4 6" opacity=".65"/><text x="${Math.min(850,X(current[0].x)+8)}" y="42">Tracking starts: ${current[0].x.toFixed(1)} m</text>${Number.isFinite(data.validation_end_x_m) ? `<line x1="${X(data.validation_end_x_m)}" x2="${X(data.validation_end_x_m)}" y1="25" y2="290" stroke="#e7bd6d" stroke-dasharray="6 4"/><text x="${Math.min(850,X(data.validation_end_x_m)+8)}" y="45">Tracking ends: frame ${data.validation_end_frame}</text>` : ""}`;let neg=current.filter(z=>z.video_bridge);svg+=neg.filter((_,i)=>i%12===0).map(z=>`<circle cx="${X(z.x)}" cy="${Y(z.y)}" r="2" fill="#ee7189"/>`).join('');svg+=`<circle cx="${X(r.x)}" cy="${Y(r.y)}" r="9" fill="#59b5ff" stroke="#fff"/><line x1="${X(r.x)}" y1="${Y(r.y)}" x2="${X(r.x)}" y2="${Y(r.y+Math.max(0,r.q))}" stroke="#6fe2b0" stroke-width="3"/><circle cx="${X(r.x)}" cy="${Y(r.y+Math.max(0,r.q))}" r="7" fill="#6fe2b0"/>`;$('track').innerHTML=svg;let V=v=>205-165*v/25;let curves=[['#f6ba72',baseline],['#59b5ff',current]].map(([color,rows])=>`<path d="${path(rows,z=>X(z.x),z=>V(z.speed),10)}" fill="none" stroke="${color}" stroke-width="2.5"/>`).join('');let bridges=current.filter(z=>z.video_bridge);let bridgeDots=bridges.filter((_,i)=>i%5===0).map(z=>`<circle cx="${X(z.x)}" cy="${V(z.speed)}" r="2.8" fill="#ee7189"/>`).join('');let videoSegments=data.measured_intervals.map(z=>`<line x1="${X(data.roller_start_x+z.x_start_m)}" x2="${X(data.roller_start_x+z.x_end_m)}" y1="${V(z.interval_avg_speed_mps)}" y2="${V(z.interval_avg_speed_mps)}" stroke="#6fe2b0" stroke-width="1.8" stroke-dasharray="5 4"/>`).join('');let topTick=25;let ticks=Array.from({length:topTick/5+1},(_,i)=>i*5);let vy=v=>205-165*v/topTick;
 let ygrid=ticks.map(v=>`<line x1="65" x2="955" y1="${vy(v)}" y2="${vy(v)}" stroke="#333" stroke-width="1"/><text x="56" y="${vy(v)+4}" text-anchor="end">${v}</text>`).join('');
 // Use the existing V scale (rounded to 5 m/s) for all curves.
-let tickCurves=[['#f6ba72',baseline],['#59b5ff',current]].map(([color,rows])=>`<path d="${path(rows,z=>X(z.x),z=>V(z.speed),10)}" fill="none" stroke="${color}" stroke-width="2.5"/>`).join('');
+let tickCurves=[['rgba(225,232,242,0.35)',current,10,1.8],['#f6ba72',splineAtLandmarks(baseline),1,2.7],['#59b5ff',splineAtLandmarks(current),1,2.9]].filter(z=>z[1].length).map(([color,rows,step,width])=>`<path d="${path(rows,z=>X(z.x),z=>V(z.speed),step)}" fill="none" stroke="${color}" stroke-width="${width}"/>`).join('');
 let tickBridges=bridges.filter((_,i)=>i%5===0).map(z=>`<circle cx="${X(z.x)}" cy="${V(z.speed)}" r="2.8" fill="#ee7189"/>`).join('');
 let tickVideo=videoVelocityEstimate.length?`<path d="${path(videoVelocityEstimate,z=>X(z.x),z=>V(z.speed),1)}" fill="none" stroke="#6fe2b0" stroke-width="2.6" stroke-dasharray="5 5"/>`:data.measured_intervals.map(z=>`<line x1="${X(data.roller_start_x+z.x_start_m)}" x2="${X(data.roller_start_x+z.x_end_m)}" y1="${V(z.interval_avg_speed_mps)}" y2="${V(z.interval_avg_speed_mps)}" stroke="#6fe2b0" stroke-width="1.8" stroke-dasharray="5 4"/>`).join('');
 $('speed').innerHTML=`<text x="65" y="22">Horizontal speed (m/s)</text>${ygrid}<line x1="65" y1="40" x2="65" y2="205" stroke="#aaa"/>${tickCurves}${tickVideo}${tickBridges}<line x1="${X(r.x)}" x2="${X(r.x)}" y1="35" y2="205" stroke="#eee" stroke-dasharray="4 4"/><text x="65" y="230">${xMin.toFixed(1)} m</text><text x="890" y="230">${xMax.toFixed(1)} m</text>`}
