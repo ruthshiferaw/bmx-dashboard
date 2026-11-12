@@ -1,20 +1,36 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BMX Roller Dynamics | Interactive Dashboard</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BMX ramp and pumping lab — q(x)</title>
 <style>
-:root{font:14px system-ui,Segoe UI,sans-serif;color:#f4f4f4;background:#000}*{box-sizing:border-box}body{max-width:1400px;margin:auto;padding:24px}h1{margin:0 0 4px;font-size:27px}h2{font-size:16px;margin:0 0 14px}p,.muted{color:#aaa}.panel{background:#090909;border:1px solid #353535;border-radius:12px;padding:18px;margin:14px 0}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.columns{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.com-overlay{margin-top:24px;border-top:1px solid #353535;padding-top:20px}.com-overlay svg{max-height:330px}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}label{display:block;color:#ddd}input[type=range]{width:100%;accent-color:#67b7f9}select,button{padding:9px 12px;background:#151515;color:white;border:1px solid #555;border-radius:8px;cursor:pointer}button:hover{background:#333}button:disabled{opacity:.5}.stat{background:#111;border-radius:8px;padding:14px;flex:1;min-width:150px}.stat strong{display:block;font-size:22px;margin-top:5px}svg{width:100%;height:auto;background:#000;border-radius:9px}svg text{font:13px system-ui;fill:#e0e0e0}.legend{display:flex;gap:16px;flex-wrap:wrap;color:#ddd}.swatch{display:inline-block;width:16px;height:3px;vertical-align:middle;margin-right:5px}.notice{padding:12px;border-left:3px solid #f4ae6a;background:#342c2a;border-radius:5px}.good{color:#77d3ac}.bad{color:#f6b47d}table{border-collapse:collapse;width:100%}td,th{padding:8px;border-bottom:1px solid #444;text-align:left}output{float:right;color:white;font-weight:600}
-</style></head><body><h1>BMX Roller Dynamics Dashboard</h1><p>Compare modeled and video-measured speeds, and explore the effects of rider technique and bike parameters.</p>
+:root{font:14px system-ui,Segoe UI,sans-serif;color:#f4f4f4;background:#000}*{box-sizing:border-box}body{max-width:1400px;margin:auto;padding:24px}h1{margin:0 0 4px;font-size:27px}h2{font-size:16px;margin:0 0 14px}p,.muted{color:#aaa}.panel{background:#090909;border:1px solid #353535;border-radius:12px;padding:18px;margin:14px 0}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}@media(max-width:900px){.columns{grid-template-columns:1fr}}.com-overlay{margin-top:0;border-top:0;padding-top:0}.com-overlay svg{max-height:330px}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}label{display:block;color:#ddd}input[type=range]{width:100%;accent-color:#67b7f9}select,button{padding:9px 12px;background:#151515;color:white;border:1px solid #555;border-radius:8px;cursor:pointer}button:hover{background:#333}button:disabled{opacity:.5}.stat{background:#111;border-radius:8px;padding:14px;flex:1;min-width:150px}.stat strong{display:block;font-size:22px;margin-top:5px}svg{width:100%;height:auto;background:#000;border-radius:9px}svg text{font:13px system-ui;fill:#e0e0e0}.legend{display:flex;gap:16px;flex-wrap:wrap;color:#ddd}.swatch{display:inline-block;width:16px;height:3px;vertical-align:middle;margin-right:5px}.notice{padding:12px;border-left:3px solid #f4ae6a;background:#342c2a;border-radius:5px}.good{color:#77d3ac}.bad{color:#f6b47d}table{border-collapse:collapse;width:100%}td,th{padding:8px;border-bottom:1px solid #444;text-align:left}output{float:right;color:white;font-weight:600}
+.importance-pill{display:inline-block;min-width:86px;padding:5px 12px;text-align:center;border-radius:999px;background:#303030;color:#c9c9c9}
+.importance-pill.medium{color:#f3b56e}
+.importance-pill.high{color:#8ac9ff}
+.importance-pill.low{color:#b9b9b9}
+
+.live-bars{display:grid;gap:11px;margin:12px 0 14px}
+.live-bar-row{display:grid;grid-template-columns:132px minmax(90px,1fr) 92px;gap:12px;align-items:center}
+.live-bar-name{font-size:13px;color:#ddd}.live-bar-track{height:12px;background:#303030;border-radius:999px;overflow:hidden}
+.live-bar-fill{height:100%;width:0%;border-radius:999px;transition:width .13s linear}
+.live-bar-value{text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+.live-bar-divider{border-top:1px solid #333;margin:12px 0}
+.live-bar-details{font-size:12px;line-height:1.6;color:#aaa}
+@media(max-width:550px){.live-bar-row{grid-template-columns:104px minmax(60px,1fr) 78px;gap:7px}}
+.tradeoff-cell{min-width:280px;max-width:560px;line-height:1.45;color:#d5d5d5}
+.sensitivity-scroll{overflow-x:auto}
+details.panel summary{cursor:pointer;font-weight:600;font-size:16px}details.panel summary+h2{display:none}details.panel[open] summary{margin-bottom:12px}select#cyclistName{min-width:245px}@media(max-width:600px){body{padding:12px}.panel{padding:12px}}
+</style></head><body><h1>BMX Roller Dynamics Dashboard</h1><p>Compare modeled and video-observed speeds, and explore the effects of rider technique and bike parameters.</p>
 <div class="panel"><div class="row"><label>Scenario <select id="preset"><option value="default">Default</option><option value="passive">No pumping</option><option value="mistimed">Shift COM along track</option><option value="lowrr">Low rolling resistance</option><option value="highrr">High rolling resistance</option><option value="lightbike">Lighter bike</option><option value="highpower">Higher ramp power</option><option value="highamp">Amplified COM motion</option><option value="custom">Custom</option></select></label><button id="play">Play</button><button id="reset">Reset playback</button><label style="flex:1;min-width:200px">Playback <input id="seek" type="range" min="0" max="1000" value="0"></label><label>Playback rate <select id="rate"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label></div>
 <div class="row" style="margin-top:12px"><button id="freeze">Set current as baseline</button><button id="load">Load baseline</button><button id="restore">Restore default baseline</button><span class="muted" id="baselineName">Baseline: default</span></div></div>
-<div class="panel"><div class="row"><label>Choose cyclist <select id="cyclistName"><option value="sleeman_p1">P1 — Last place</option><option value="sleeman_p2">P2 — Second-to-last place</option><option value="sleeman_p3">P3 — First place</option></select></label><span class="muted" id="cyclistLoaded"></span></div></div><div id="status" class="notice">Loading model data…</div><div class="row" id="metrics" style="margin-top:15px"></div>
-<div class="panel"><h2>Track, rider and speed</h2><p class="muted">Full terrain is always shown. Playback and modeled speed stop at the last contact-tracked COM frame when configured.</p><svg id="track" viewBox="0 0 1000 330" role="img" aria-label="Track profile and animated rider"></svg><svg id="speed" viewBox="0 0 1000 250" role="img" aria-label="Speed comparison"></svg><div class="legend"><span><i class="swatch" style="background:#59b5ff"></i>Current</span><span><i class="swatch" style="background:#f6ba72"></i>Frozen baseline</span><span><i class="swatch" style="background:#a6aab6"></i>No COM motion</span><span><i class="swatch" style="background:#ee7189"></i>Video-speed bridge (non-contact)</span><span><i class="swatch" style="background:#6fe2b0"></i>Measured interval average</span></div></div>
-<div class="columns"><div class="panel"><h2>Rider and team parameters</h2><div class="controls" id="controls"></div>
-<div class="com-overlay" id="comOverlayPanel"><h2>COM motion over the terrain</h2>
-<p class="muted">The gray line is the digitized roller terrain. Blue is the measured COM profile at its original position and amplitude; orange is the COM profile for the current slider settings. All three use the same height scale. COM displacement is projected along the terrain normal.</p>
+<div class="panel"><label>Choose cyclist <select id="cyclistName"><option value="sleeman_p1">P1 — Last place</option><option value="sleeman_p2">P2 — Second-to-last place</option><option value="sleeman_p3">P3 — First place</option></select></label> <span class="muted" id="cyclistLoaded"></span></div><details class="panel"><summary>COM motion processing</summary><h2>COM motion processing</h2><p class="muted">Measured COM motion is smoothed using a 15-frame Savitzky–Golay filter, mapped to track position using video landmarks, and fitted with a cubic smoothing spline (8 mm RMS target). The same spatial spline supplies the COM position and derivatives used in the dynamics.</p></details><div id="status" class="notice">Loading model data…</div><div class="row" id="metrics" style="margin-top:15px"></div>
+<div class="panel"><h2>Acceleration diagnostics (warning only)</h2><div id="accelDiagnostics" class="muted">Loading…</div></div><div class="panel"><h2>Track, rider and speed</h2><p class="muted">The ramp is hidden when include_ramp is false. Both plots use the same track-distance axis. Playback and modeled speed stop at the last contact-tracked COM frame when configured.</p><svg id="track" viewBox="0 0 1000 330" role="img" aria-label="Track profile and animated rider"></svg><svg id="speed" viewBox="0 0 1000 250" role="img" aria-label="Speed comparison"></svg><p class="muted">Green curve: smooth velocity <em>estimate</em> obtained by differentiating a shape-preserving cubic position–time interpolation through measured video landmarks. Intermediate velocities are inferred, not directly measured. Video-speed bridging and sector comparisons still use the original measured interval averages.</p><div class="legend"><span><i class="swatch" style="background:#59b5ff"></i>Current</span><span><i class="swatch" style="background:#f6ba72"></i>Frozen baseline</span><span><i class="swatch" style="background:#ee7189"></i>Non-contact zones</span><span><i class="swatch" style="background:#6fe2b0"></i>Observed velocity</span></div></div>
+<div class="columns"><div class="panel"><h2>Live forces and power</h2><div id="live" class="muted">—</div><h2 style="margin-top:24px">Rider and team parameters</h2><div class="controls" id="controls"></div></div><div class="panel"><div class="com-overlay" id="comOverlayPanel"><h2>COM motion over the terrain</h2><p class="muted">Fixed vertical scale: 0–3.7 m, relative to the lowest point of the roller terrain. This display offset does not alter the dynamics.</p>
+<p class="muted">The gray line is the actual roller terrain. Blue is the measured COM profile at its original position and amplitude; orange is the COM profile for the current slider settings. All three use the same height scale. COM displacement is projected along the terrain normal.</p>
 <svg id="comSpatial" viewBox="0 0 1000 320" role="img" aria-label="Terrain and reference and adjusted COM trajectories versus roller distance"></svg>
 <div class="legend"><span><i class="swatch" style="background:#b7c6d7"></i>Terrain</span><span><i class="swatch" style="background:#59b5ff"></i>Measured COM (reference)</span><span><i class="swatch" style="background:#f6ba72"></i>Current COM (adjusted)</span></div>
-<p id="comSpatialInfo" class="muted"></p></div></div><div class="panel"><h2>Live forces and power</h2><div id="live" class="muted">—</div><h2 style="margin-top:24px">Measured landmark interval speeds</h2><div id="validation"></div></div></div>
-<div class="panel"><h2>Parameter importance by section</h2><p>Low-to-high scenario differences, recalculated with the same q(x) model. Interpret cautiously where predicted contact is lost.</p><div id="sensitivity"></div></div>
-<div class="panel"><h2>Physics used in this dashboard</h2><p>On the ramp and its transition, the rider is approximated as a point mass (q=0 in the dynamics) to avoid applying the video-measured roller COM height to an unmeasured transition COM path. On rollers, q(x) is prescribed from synchronized video COM and landmark measurements. q̇=qₓvₓ; q̈=qₓₓvₓ²+qₓaₓ. The acceleration is solved self-consistently with the rolling force. The tangential equation is D·aₛ = mᵣΛ(κ′qvₛ² + 2κq̇vₛ) − g sinθ(Mg − mᵣκq) + Fpedal − Fdrag − Froll, with Λ=1−κq and D=Mbike+Iwheel/rwheel²+mᵣΛ². Drag = ½ρCdA vₛ|vₛ|; rolling resistance = Crr·max(N,0). Red points use piecewise-constant measured interval-average video speeds while the constrained-contact model predicts loss of contact.</p></div>
-<div class="panel"><h2>Model limitations</h2><p>The prescribed q(x) profile comes from one video, not an independently optimized pumping law. Spatial shifts and amplitude scaling are sensitivity experiments. When the constrained-contact model predicts negative normal load, horizontal speed is taken from the measured interval-speed profile (red regions). Physics integration resumes on re-contact. This is a validation bridge, not a flight-dynamics prediction. The COM signal is assumed to be a normal displacement, as in the coworker's original formulation; verify that against your digitization convention. Playback uses elapsed trajectory time, not frame index.</p></div>
+<p id="comSpatialInfo" class="muted"></p></div></div></div>
+<div class="panel" id="intervalComparisonPanel"><h2>Observed vs simulated average horizontal velocity</h2><p class="muted">Interval averages are distance divided by elapsed time at the same landmark boundaries. The simulated curve uses observed interval velocities in negative-normal-force regions; bridged intervals are not independent predictions. Partial intervals are compared over the common covered distance only.</p><div id="velocityTotals" class="row"></div><h2 style="margin-top:20px">Average velocity by landmark interval</h2><svg id="intervalVelocityChart" viewBox="0 0 1000 350" role="img" aria-label="Observed and simulated average horizontal velocity by landmark interval"></svg><div class="legend"><span><i class="swatch" style="background:#6fe2b0"></i>Observed</span><span><i class="swatch" style="background:#59b5ff"></i>Simulated (video-bridged)</span></div><div id="intervalVelocityTable" style="overflow-x:auto;margin-top:14px"></div><div class="row" style="margin-top:12px"><button id="downloadVelocityCsv">Download comparison CSV</button><span class="muted">Includes interval and overall averages, errors and bridged distance.</span></div></div>
+<div class="panel"><h2>Parameter importance by section</h2><p class="muted">Sensitivity of <strong>elapsed time</strong> to each parameter: Low (&lt;1% change), Medium (1–5%), High (≥5%). Ramp, pumping section, and overall are classified separately using 100 × |time at high setting − time at low setting| / max(time at either setting). Other settings remain fixed. For COM spatial shift, instead of comparing the slider endpoints, the dashboard scans every 0.25 m step and compares the shifts producing the lowest and highest <strong>overall average horizontal velocity</strong>; those shifts and the corresponding Δ average velocity are shown below. These are range-dependent sensitivity categories, not statistical importance scores.</p><div id="sensitivity" class="sensitivity-scroll"></div></div>
+<details class="panel"><summary>Physics used in this dashboard</summary><h2>Physics used in this dashboard</h2><p>On the ramp and its transition, the rider is approximated as a point mass (q=0 in the dynamics) to avoid applying the video-measured roller COM height to an unmeasured transition COM path. On rollers, q(x) is prescribed from synchronized video COM and landmark measurements. q̇=qₓvₓ; q̈=qₓₓvₓ²+qₓaₓ. The acceleration is solved self-consistently with the rolling force. The tangential equation is D·aₛ = mᵣΛ(κ′qvₛ² + 2κq̇vₛ) − g sinθ(Mg − mᵣκq) + Fpedal − Fdrag − Froll, with Λ=1−κq and D=Mbike+Iwheel/rwheel²+mᵣΛ². Drag = ½ρCdA vₛ|vₛ|; rolling resistance = Crr·max(N,0). Red points use piecewise-constant measured interval-average video speeds while the constrained-contact model predicts loss of contact.</p></details>
+<details class="panel"><summary>Model limitations</summary><h2>Model limitations</h2><p>The prescribed q(x) profile comes from one video, not an independently optimized pumping law. Spatial shifts and amplitude scaling are sensitivity experiments. When the constrained-contact model predicts negative normal load, horizontal speed is taken from the measured interval-speed profile (red regions). Physics integration resumes on re-contact. This is a validation bridge, not a flight-dynamics prediction. The COM signal is assumed to be a normal displacement, as in the coworker's original formulation; verify that against your digitization convention. Playback uses elapsed trajectory time, not frame index.</p></details>
 <script>
 'use strict';const $=id=>document.getElementById(id);const defaults={m_r:72,bike_mass:11,CdA:.45,C_rr:.008,pedal_power:650,pedal_force_cap:800,pump_scale:1,pump_shift_m:0,q0:.42,rho:1.225,I_w:.065,r_w:.254,g:9.81};let data,p={...defaults},current,baseline,passive,baselineP={...defaults},playing=false,raf=0,lastStamp=null,playTime=0;
 const defs=[['pedal_power','Ramp pedal power','W',350,1100,25],['pedal_force_cap','Pedal force cap','N',300,1200,50],['pump_scale','COM amplitude multiplier','×',0,1.8,.05],['pump_shift_m','COM spatial shift','m',-10,10,.25],['m_r','Rider mass','kg',55,95,1],['bike_mass','Bike mass','kg',8,16,.5],['C_rr','Rolling resistance Crr','',.003,.025,.001],['CdA','Aerodynamic CdA','m²',.30,.80,.025]];
@@ -29,6 +45,52 @@ function qterms(localX,pr){
  const it=a=>a[lo]+f*(a[hi]-a[lo]);
  return [pr.q0+pr.pump_scale*(it(c.q)-c.q[0]),pr.pump_scale*it(c.qx),pr.pump_scale*it(c.qxx)];
 }
+ // Construct a shape-preserving cubic Hermite x(t) through measured landmark positions.
+ // This estimates within-interval speed but does NOT add independent measurements.
+ let videoVelocityEstimate=[];
+ function buildVideoVelocityEstimate(){
+   videoVelocityEstimate=[];
+   const z=data.measured_intervals||[];
+   if(!z.length)return;
+   const t=[Number(z[0].time_start_s),...z.map(r=>Number(r.time_end_s))];
+   const x=[Number(z[0].x_start_m),...z.map(r=>Number(r.x_end_m))];
+   const n=t.length;
+   if(n<2||t.some(v=>!Number.isFinite(v))||x.some(v=>!Number.isFinite(v)))return;
+   const h=[],d=[];
+   for(let i=0;i<n-1;i++){
+     h.push(t[i+1]-t[i]);d.push((x[i+1]-x[i])/h[i]);
+     if(!(h[i]>0&&d[i]>0))return;
+   }
+   const m=new Array(n);
+   if(n===2){m[0]=d[0];m[1]=d[0];}
+   else{
+     // PCHIP interior slopes: weighted harmonic mean of adjacent secants.
+     for(let i=1;i<n-1;i++){
+       const w1=2*h[i]+h[i-1],w2=h[i]+2*h[i-1];
+       m[i]=(d[i-1]*d[i]<=0)?0:(w1+w2)/(w1/d[i-1]+w2/d[i]);
+     }
+     const endpoint=(ha,hb,da,db)=>{
+       let v=((2*ha+hb)*da-ha*db)/(ha+hb);
+       if(Math.sign(v)!==Math.sign(da))v=0;
+       else if(Math.sign(da)!==Math.sign(db)&&Math.abs(v)>3*Math.abs(da))v=3*da;
+       return v;
+     };
+     m[0]=endpoint(h[0],h[1],d[0],d[1]);
+     m[n-1]=endpoint(h[n-2],h[n-3],d[n-2],d[n-3]);
+   }
+   // Differentiate each Hermite segment analytically. Sampling in t gives
+   // points (x(t), dx/dt) for the spatial speed plot.
+   const samplesPerInterval=20;
+   for(let i=0;i<n-1;i++){
+     for(let j=0;j<=samplesPerInterval;j++){
+       if(i>0&&j===0)continue;
+       const u=j/samplesPerInterval,hh=h[i],x0=x[i],x1=x[i+1];
+       const pos=(2*u**3-3*u*u+1)*x0+(u**3-2*u*u+u)*hh*m[i]+(-2*u**3+3*u*u)*x1+(u**3-u*u)*hh*m[i+1];
+       const vel=((6*u*u-6*u)*x0+(3*u*u-4*u+1)*hh*m[i]+(-6*u*u+6*u)*x1+(3*u*u-2*u)*hh*m[i+1])/hh;
+       if(Number.isFinite(pos)&&Number.isFinite(vel))videoVelocityEstimate.push({x:data.roller_start_x+pos,speed:Math.max(0,vel)});
+     }
+   }
+ }
 function videoSpeed(x){
   const z=data.measured_intervals,xx=x-data.roller_start_x;
   if(xx<z[0].x_start_m)return z[0].interval_avg_speed_mps;
@@ -55,7 +117,7 @@ function calc(x,v,t,entryTime,pr){
  return {x,t,y:lookup(g.y,x),speed:v,path_speed:vs,acceleration:ax,path_acceleration:r.as,q,qdot:qd,qddot:r.qdd,q_x:qx,q_xx:qxx,normal_load:r.N,in_contact:r.N>=0,pedal_power:pedal*vs,pump_power:pr.m_r*(r.qdd+kappa*lam*vs*vs+pr.g*cos)*qd,drag_power:drag*vs,rolling_power:r.roll*vs};
 }
 function simulate(pr, bridge=true){
- let x=data.start_x_m??0,v=data.start_vx_mps??2,t=0,entry=null,rows=[],dt=data.dt,end=(data.stop_at_validation_end&&Number.isFinite(data.validation_end_x_m)?Math.min(data.geometry.x.at(-1),data.validation_end_x_m):data.geometry.x.at(-1)),bridging=false;
+ let measuredStart=data.measured_intervals?.length?data.roller_start_x+data.measured_intervals[0].x_start_m:null;let configuredStart=Number(data.start_x_m??0);let x=(data.include_ramp===false&&Number.isFinite(measuredStart))?Math.max(configuredStart,measuredStart):configuredStart,v=data.start_vx_mps??2,t=0,entry=null,rows=[],dt=data.dt,end=(data.stop_at_validation_end&&Number.isFinite(data.validation_end_x_m)?Math.min(data.geometry.x.at(-1),data.validation_end_x_m):data.geometry.x.at(-1)),bridging=false;
  for(let i=0;i<Math.ceil(25/dt)+1;i++){
   if(entry===null&&x>=data.roller_start_x)entry=t;
   let et=entry===null?t:entry;
@@ -107,9 +169,71 @@ function showAccelerationDiagnostics(){
 function byX(rows,x){let lo=0,hi=rows.length-1;while(hi-lo>1){let m=(lo+hi)>>1;if(rows[m].x<x)lo=m;else hi=m}return rows[lo]}
 function byT(rows,t){let lo=0,hi=rows.length-1;while(hi-lo>1){let m=(lo+hi)>>1;if(rows[m].t<t)lo=m;else hi=m}return rows[lo]}
 function summary(rows){let a=byX(rows,data.roller_start_x),b=rows.at(-1);return {ramp:a.t,roller:b.t-a.t,total:b.t,entry:a.speed,exit:b.speed,neg:rows.filter(r=>r.video_bridge).length}}
+// Compare average HORIZONTAL speeds by matching spatial landmark boundaries.
+// Linear interpolation here is only to find simulated crossing times between integration samples.
+let intervalComparisonRows=[];
+function crossingTime(rows,target){
+ if(target<rows[0].x-1e-7||target>rows.at(-1).x+1e-7)return NaN;
+ if(target<=rows[0].x)return rows[0].t;
+ if(target>=rows.at(-1).x)return rows.at(-1).t;
+ let lo=0,hi=rows.length-1;
+ while(hi-lo>1){let mid=(lo+hi)>>1;if(rows[mid].x<target)lo=mid;else hi=mid;}
+ let a=rows[lo],b=rows[hi],f=(target-a.x)/(b.x-a.x);
+ return a.t+f*(b.t-a.t);
+}
+function bridgeDistance(rows,x0,x1){
+ let total=0;
+ for(let j=0;j<rows.length-1;j++){
+  let a=rows[j],b=rows[j+1];
+  if(a.x>=x1)break;
+  if(a.video_bridge||b.video_bridge)total+=Math.max(0,Math.min(x1,b.x)-Math.max(x0,a.x));
+ }
+ return Math.min(x1-x0,total);
+}
+function velocityComparison(rows){
+ const start=rows[0].x,end=rows.at(-1).x,origin=data.roller_start_x;
+ let result=[],sumD=0,sumObsT=0,sumSimT=0,sumBridge=0;
+ data.measured_intervals.forEach((z,i)=>{
+  const fullA=origin+z.x_start_m,fullB=origin+z.x_end_m;
+  const a=Math.max(start,fullA),b=Math.min(end,fullB);
+  if(b-a<1e-6)return;
+  const ta=crossingTime(rows,a),tb=crossingTime(rows,b),d=b-a;
+  if(!Number.isFinite(ta)||!Number.isFinite(tb)||tb<=ta)return;
+  const obs=Number(z.interval_avg_speed_mps),sim=d/(tb-ta),bridged=bridgeDistance(rows,a,b);
+  if(!Number.isFinite(obs)||obs<=0)return;
+  result.push({label:`${(a-origin).toFixed(1)}–${(b-origin).toFixed(1)}`,sector:i+1,x_start_m:a-origin,x_end_m:b-origin,distance_m:d,observed_mps:obs,simulated_mps:sim,error_mps:sim-obs,bridge_distance_m:bridged,bridge_pct:100*bridged/d,partial:a>fullA+1e-5||b<fullB-1e-5});
+  sumD+=d;sumObsT+=d/obs;sumSimT+=tb-ta;sumBridge+=bridged;
+ });
+ if(sumD>0)result.push({label:'TOTAL (matched intervals)',sector:'TOTAL',x_start_m:result[0].x_start_m,x_end_m:result.at(-1).x_end_m,distance_m:sumD,observed_mps:sumD/sumObsT,simulated_mps:sumD/sumSimT,error_mps:sumD/sumSimT-sumD/sumObsT,bridge_distance_m:sumBridge,bridge_pct:100*sumBridge/sumD,partial:false});
+ return result;
+}
+function renderVelocityComparison(){
+ intervalComparisonRows=velocityComparison(current);
+ const rows=intervalComparisonRows.filter(z=>z.sector!=='TOTAL'),total=intervalComparisonRows.find(z=>z.sector==='TOTAL');
+ if(!total){$('velocityTotals').textContent='No measured landmark intervals overlap the simulated trajectory.';$('intervalVelocityChart').innerHTML='';$('intervalVelocityTable').innerHTML='';return;}
+ const stat=(name,val)=>`<div class="stat">${name}<strong>${val}</strong></div>`;
+ $('velocityTotals').innerHTML=stat('Observed total average',total.observed_mps.toFixed(2)+' m/s')+stat('Simulated total average',total.simulated_mps.toFixed(2)+' m/s')+stat('Difference (sim − obs)',(total.error_mps>=0?'+':'')+total.error_mps.toFixed(2)+' m/s')+stat('Video-bridged distance',total.bridge_pct.toFixed(1)+'%');
+ const max=25; // Fixed chart scale (m/s).
+ const left=62,right=980,top=35,bottom=260,base=bottom,plotW=right-left;
+ const Y=v=>base-(v/max)*(bottom-top),band=plotW/Math.max(1,rows.length),bar=Math.min(24,band*.3);
+ let svg='';
+ for(let k=0;k<=4;k++){let v=max*k/4,y=Y(v);svg+=`<line x1="${left}" x2="${right}" y1="${y}" y2="${y}" stroke="#333"/><text x="${left-8}" y="${y+4}" text-anchor="end">${v.toFixed(1)}</text>`;}
+ rows.forEach((z,i)=>{let center=left+band*(i+.5),a=Y(z.observed_mps),b=Y(z.simulated_mps);svg+=`<rect x="${center-bar-2}" y="${a}" width="${bar}" height="${base-a}" fill="#6fe2b0"/><rect x="${center+2}" y="${b}" width="${bar}" height="${base-b}" fill="#59b5ff"/><text x="${center}" y="${bottom+19}" text-anchor="middle" font-size="11">${z.sector}${z.partial?'*':''}</text>`;});
+ svg+=`<text x="${left}" y="17">Mean horizontal velocity (m/s)</text><text x="${(left+right)/2}" y="${bottom+48}" text-anchor="middle">Landmark interval (numbered in table; * = partial)</text>`;
+ $('intervalVelocityChart').innerHTML=svg;
+ const f=n=>Number(n).toFixed(2);
+ $('intervalVelocityTable').innerHTML='<table><thead><tr><th>Interval</th><th>Local x (m)</th><th>Distance (m)</th><th>Observed (m/s)</th><th>Simulated (m/s)</th><th>Δ (m/s)</th><th>Bridged (%)</th></tr></thead><tbody>'+intervalComparisonRows.map(z=>`<tr${z.sector==='TOTAL'?' style="font-weight:700;background:#151515"':''}><td>${z.sector}${z.partial?'*':''}</td><td>${z.label}</td><td>${f(z.distance_m)}</td><td>${f(z.observed_mps)}</td><td>${f(z.simulated_mps)}</td><td>${z.error_mps>=0?'+':''}${f(z.error_mps)}</td><td>${f(z.bridge_pct)}</td></tr>`).join('')+'</tbody></table><p class="muted">Total is distance / total elapsed time over the compared intervals (not the arithmetic mean of sector speeds). Intervals marked * are partially covered. Bridged percentages are approximate distance fractions; nonzero bridging means the result uses measured velocity input.</p>';
+}
+function downloadVelocityCsv(){
+ if(!intervalComparisonRows.length)return;
+ const columns=['sector','x_start_m','x_end_m','distance_m','observed_mps','simulated_mps','error_mps','bridge_distance_m','bridge_pct','partial'];
+ const content=[columns.join(','),...intervalComparisonRows.map(r=>columns.map(k=>r[k]).join(','))].join('\n');
+ const blob=new Blob([content],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=($('cyclistName').value.trim()||'cyclist')+'_velocity_comparison.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 function render(){if(!current)return;let s=summary(current),b=summary(baseline),r=byT(current,playTime);$('metrics').innerHTML=[['Ramp time',s.ramp,b.ramp,'s'],['Roller time',s.roller,b.roller,'s'],['Time to tracking end',s.total,b.total,'s'],['Roller entry',s.entry,b.entry,'m/s'],['Speed at tracking end',s.exit,b.exit,'m/s']].map(([label,val,base,unit])=>`<div class="stat">${label}<strong>${val.toFixed(2)} ${unit}</strong><small>vs baseline: ${(val-base)>=0?'+':''}${(val-base).toFixed(2)} ${unit}</small></div>`).join('');$('status').textContent=s.neg?`⚠ ${s.neg} time steps use measured video interval speed (red); physics resumes after re-contact.`:'✓ Predicted contact load remains nonnegative across the trajectory.';$('status').className=s.neg?'notice':'notice good';if(data.stop_at_validation_end&&Number.isFinite(data.validation_end_x_m)){
-  $('status').textContent += ` Playback ends at the last valid contact-tracked frame (${data.validation_end_frame ?? 'COM endpoint'}), x=${data.validation_end_x_m.toFixed(2)} m; the full terrain remains visible.`;
- }drawComSpatial(r);$('live').innerHTML=`Time: ${r.t.toFixed(2)} s · Horizontal x: ${r.x.toFixed(2)} m · Horizontal speed: ${r.speed.toFixed(2)} m/s · Path speed: ${r.path_speed.toFixed(2)} m/s<br>q(x): ${r.q.toFixed(3)} m · qₓ: ${r.q_x.toFixed(3)} m/m · q̇: ${r.qdot.toFixed(3)} m/s · q̈: ${r.qddot.toFixed(2)} m/s² · Contact load: ${r.normal_load.toFixed(0)} N<br>Crank: ${r.pedal_power.toFixed(0)} W · COM actuator: ${r.pump_power.toFixed(0)} W · Aero loss: ${r.drag_power.toFixed(0)} W · Rolling loss: ${r.rolling_power.toFixed(0)} W`;draw(r)}
+  $('status').textContent += ` Playback ends at the last valid contact-tracked frame (${data.validation_end_frame ?? 'COM endpoint'}), x=${data.validation_end_x_m.toFixed(2)} m; the displayed terrain follows the ramp setting.`;
+ }showAccelerationDiagnostics();renderVelocityComparison();drawComSpatial(r);renderLiveBars(r);draw(r)}
 function drawComSpatial(r){
  const g=data.geometry,c=data.com,begin=data.roller_start_x,localMin=c.x[0],localMax=c.x.at(-1);
  if(!Number.isFinite(localMax)||localMax<=localMin)return;
@@ -129,33 +253,121 @@ function drawComSpatial(r){
    test.push(pointAt(local,adjusted));
  }
  const points=[...terrain,...ref,...test],minX=Math.min(...points.map(z=>z.x)),maxX=Math.max(...points.map(z=>z.x));
- const minY=Math.min(...points.map(z=>z.y)),maxY=Math.max(...points.map(z=>z.y)),padY=Math.max(.18,(maxY-minY)*.13);
- const X=x=>70+865*(x-minX)/Math.max(.01,maxX-minX),Y=y=>258-213*(y-(minY-padY))/(maxY-minY+2*padY);
+ const terrainDatum=Math.min(...terrain.map(z=>z.y)); // Plot only: lowest roller terrain is 0 m.
+ const X=x=>70+865*(x-minX)/Math.max(.01,maxX-minX),Y=y=>258-213*(y-terrainDatum)/3.7;
  const line=arr=>arr.map((z,i)=>(i?'L':'M')+X(z.x).toFixed(2)+' '+Y(z.y).toFixed(2)).join(' ');
- const grid=Array.from({length:5},(_,i)=>{const y=minY+(maxY-minY)*i/4;return `<line x1="65" x2="950" y1="${Y(y)}" y2="${Y(y)}" stroke="#303030"/><text x="59" y="${Y(y)+4}" text-anchor="end">${y.toFixed(1)}</text>`}).join('');
+ const grid=Array.from({length:5},(_,i)=>{const h=3.7*i/4,y=terrainDatum+h;return `<line x1="65" x2="950" y1="${Y(y)}" y2="${Y(y)}" stroke="#303030"/><text x="59" y="${Y(y)+4}" text-anchor="end">${h.toFixed(2)}</text>`}).join('');
  const local=r.x-begin,inside=local>=localMin&&local<=localMax;
  const marker=inside?(()=>{const q=pointAt(local,adjusted);return `<line x1="${X(r.x)}" x2="${X(r.x)}" y1="36" y2="262" stroke="#f6ba72" stroke-dasharray="4 4" opacity=".55"/><circle cx="${X(q.x)}" cy="${Y(q.y)}" r="5" fill="#f6ba72" stroke="#fff"/>`})():'';
  const modified=Math.abs(p.pump_scale-1)>1e-9||Math.abs(p.pump_shift_m)>1e-9;
- $('comSpatial').innerHTML=`${grid}<path d="${line(terrain)}" stroke="#b7c6d7" stroke-width="3" fill="none"/><path d="${line(ref)}" stroke="#59b5ff" stroke-width="2.5" fill="none"/><path d="${line(test)}" stroke="#f6ba72" stroke-width="2.5" fill="none" ${modified?'':'stroke-dasharray="5 4"'}/>${marker}<text x="70" y="20">Height above terrain datum (m)</text><text x="70" y="291">${localMin.toFixed(1)} m</text><text x="885" y="291">${localMax.toFixed(1)} m</text><text x="435" y="312">Distance from roller entry (m)</text>`;
+ $('comSpatial').innerHTML=`${grid}<path d="${line(terrain)}" stroke="#b7c6d7" stroke-width="3" fill="none"/><path d="${line(ref)}" stroke="#59b5ff" stroke-width="2.5" fill="none"/><path d="${line(test)}" stroke="#f6ba72" stroke-width="2.5" fill="none" ${modified?'':'stroke-dasharray="5 4"'}/>${marker}<text x="70" y="20">Height above lowest roller terrain (m)</text><text x="70" y="291">${localMin.toFixed(1)} m</text><text x="885" y="291">${localMax.toFixed(1)} m</text><text x="435" y="312">Distance from roller entry (m)</text>`;
  $('comSpatialInfo').textContent=`Current COM amplitude: ${p.pump_scale.toFixed(2)}× · spatial shift: ${p.pump_shift_m.toFixed(2)} m${modified?' · orange curve shows adjusted motion':' · orange and blue coincide at default settings'}.`;
 }
 function path(rows,fx,fy,step=10){return rows.filter((_,i)=>i%step===0||i===rows.length-1).map((r,i)=>(i?'L':'M')+fx(r).toFixed(2)+' '+fy(r).toFixed(2)).join(' ')}
-function draw(r){const xMax=data.geometry.x.at(-1),minY=Math.min(...data.geometry.y),maxY=Math.max(...data.geometry.y),X=x=>65+890*x/xMax,Y=y=>285-220*(y-minY)/(maxY-minY+1),g=data.geometry,trackRows=g.x.map((x,i)=>({x,y:g.y[i]}));let svg=`<line x1="45" y1="290" x2="955" y2="290" stroke="#51617a"/><path d="${path(trackRows,z=>X(z.x),z=>Y(z.y),6)}" fill="none" stroke="#b7c6d7" stroke-width="3"/><line x1="${X(data.roller_start_x)}" y1="25" x2="${X(data.roller_start_x)}" y2="290" stroke="#677a94" stroke-dasharray="5 5"/><text x="${X(data.roller_start_x)+8}" y="22">Rollers begin</text>${Number.isFinite(data.validation_end_x_m) ? `<line x1="${X(data.validation_end_x_m)}" x2="${X(data.validation_end_x_m)}" y1="25" y2="290" stroke="#e7bd6d" stroke-dasharray="6 4"/><text x="${Math.min(850,X(data.validation_end_x_m)+8)}" y="45">Tracking ends: frame ${data.validation_end_frame}</text>` : ""}`;let neg=current.filter(z=>z.video_bridge);svg+=neg.filter((_,i)=>i%12===0).map(z=>`<circle cx="${X(z.x)}" cy="${Y(z.y)}" r="2" fill="#ee7189"/>`).join('');svg+=`<circle cx="${X(r.x)}" cy="${Y(r.y)}" r="9" fill="#59b5ff" stroke="#fff"/><line x1="${X(r.x)}" y1="${Y(r.y)}" x2="${X(r.x)}" y2="${Y(r.y)-Math.max(0,r.q)*14}" stroke="#6fe2b0" stroke-width="3"/><circle cx="${X(r.x)}" cy="${Y(r.y)-Math.max(0,r.q)*14}" r="7" fill="#6fe2b0"/>`;$('track').innerHTML=svg;let all=[current,baseline,passive],vmax=Math.max(5,...all.map(a=>Math.max(...a.filter((_,i)=>i%10===0).map(z=>z.speed))));let V=v=>205-165*v/(Math.ceil(vmax/5)*5);let curves=[['#a6aab6',passive],['#f6ba72',baseline],['#59b5ff',current]].map(([color,rows])=>`<path d="${path(rows,z=>X(z.x),z=>V(z.speed),10)}" fill="none" stroke="${color}" stroke-width="2.5"/>`).join('');let bridges=current.filter(z=>z.video_bridge);let bridgeDots=bridges.filter((_,i)=>i%5===0).map(z=>`<circle cx="${X(z.x)}" cy="${V(z.speed)}" r="2.8" fill="#ee7189"/>`).join('');let videoSegments=data.measured_intervals.map(z=>`<line x1="${X(data.roller_start_x+z.x_start_m)}" x2="${X(data.roller_start_x+z.x_end_m)}" y1="${V(z.interval_avg_speed_mps)}" y2="${V(z.interval_avg_speed_mps)}" stroke="#6fe2b0" stroke-width="1.8" stroke-dasharray="5 4"/>`).join('');let topTick=Math.ceil(vmax/5)*5;let ticks=Array.from({length:topTick/5+1},(_,i)=>i*5);let vy=v=>205-165*v/topTick;
+function draw(r){const g=data.geometry,showRamp=data.include_ramp!==false,xMin=showRamp?g.x[0]:data.roller_start_x,xMax=g.x.at(-1),trackRows=g.x.map((x,i)=>({x,y:g.y[i]})).filter(z=>z.x>=xMin-1e-9),minY=Math.min(...g.y),maxY=Math.max(...g.y),X=x=>65+890*(x-xMin)/Math.max(1e-9,xMax-xMin),Y=y=>285-220*(y-minY)/(maxY-minY+1);let svg=`<line x1="45" y1="290" x2="955" y2="290" stroke="#51617a"/><path d="${path(trackRows,z=>X(z.x),z=>Y(z.y),6)}" fill="none" stroke="#b7c6d7" stroke-width="3"/><line x1="${X(data.roller_start_x)}" y1="25" x2="${X(data.roller_start_x)}" y2="290" stroke="#677a94" stroke-dasharray="5 5"/><text x="${X(data.roller_start_x)+8}" y="22">Rollers begin</text><line x1="${X(current[0].x)}" y1="25" x2="${X(current[0].x)}" y2="290" stroke="#8bd3ff" stroke-dasharray="4 6" opacity=".65"/><text x="${Math.min(850,X(current[0].x)+8)}" y="42">Tracking starts: ${current[0].x.toFixed(1)} m</text>${Number.isFinite(data.validation_end_x_m) ? `<line x1="${X(data.validation_end_x_m)}" x2="${X(data.validation_end_x_m)}" y1="25" y2="290" stroke="#e7bd6d" stroke-dasharray="6 4"/><text x="${Math.min(850,X(data.validation_end_x_m)+8)}" y="45">Tracking ends: frame ${data.validation_end_frame}</text>` : ""}`;let neg=current.filter(z=>z.video_bridge);svg+=neg.filter((_,i)=>i%12===0).map(z=>`<circle cx="${X(z.x)}" cy="${Y(z.y)}" r="2" fill="#ee7189"/>`).join('');svg+=`<circle cx="${X(r.x)}" cy="${Y(r.y)}" r="9" fill="#59b5ff" stroke="#fff"/><line x1="${X(r.x)}" y1="${Y(r.y)}" x2="${X(r.x)}" y2="${Y(r.y+Math.max(0,r.q))}" stroke="#6fe2b0" stroke-width="3"/><circle cx="${X(r.x)}" cy="${Y(r.y+Math.max(0,r.q))}" r="7" fill="#6fe2b0"/>`;$('track').innerHTML=svg;let V=v=>205-165*v/25;let curves=[['#f6ba72',baseline],['#59b5ff',current]].map(([color,rows])=>`<path d="${path(rows,z=>X(z.x),z=>V(z.speed),10)}" fill="none" stroke="${color}" stroke-width="2.5"/>`).join('');let bridges=current.filter(z=>z.video_bridge);let bridgeDots=bridges.filter((_,i)=>i%5===0).map(z=>`<circle cx="${X(z.x)}" cy="${V(z.speed)}" r="2.8" fill="#ee7189"/>`).join('');let videoSegments=data.measured_intervals.map(z=>`<line x1="${X(data.roller_start_x+z.x_start_m)}" x2="${X(data.roller_start_x+z.x_end_m)}" y1="${V(z.interval_avg_speed_mps)}" y2="${V(z.interval_avg_speed_mps)}" stroke="#6fe2b0" stroke-width="1.8" stroke-dasharray="5 4"/>`).join('');let topTick=25;let ticks=Array.from({length:topTick/5+1},(_,i)=>i*5);let vy=v=>205-165*v/topTick;
 let ygrid=ticks.map(v=>`<line x1="65" x2="955" y1="${vy(v)}" y2="${vy(v)}" stroke="#333" stroke-width="1"/><text x="56" y="${vy(v)+4}" text-anchor="end">${v}</text>`).join('');
 // Use the existing V scale (rounded to 5 m/s) for all curves.
-let tickCurves=[['#a6aab6',passive],['#f6ba72',baseline],['#59b5ff',current]].map(([color,rows])=>`<path d="${path(rows,z=>X(z.x),z=>V(z.speed),10)}" fill="none" stroke="${color}" stroke-width="2.5"/>`).join('');
+let tickCurves=[['#f6ba72',baseline],['#59b5ff',current]].map(([color,rows])=>`<path d="${path(rows,z=>X(z.x),z=>V(z.speed),10)}" fill="none" stroke="${color}" stroke-width="2.5"/>`).join('');
 let tickBridges=bridges.filter((_,i)=>i%5===0).map(z=>`<circle cx="${X(z.x)}" cy="${V(z.speed)}" r="2.8" fill="#ee7189"/>`).join('');
-let tickVideo=data.measured_intervals.map(z=>`<line x1="${X(data.roller_start_x+z.x_start_m)}" x2="${X(data.roller_start_x+z.x_end_m)}" y1="${V(z.interval_avg_speed_mps)}" y2="${V(z.interval_avg_speed_mps)}" stroke="#6fe2b0" stroke-width="1.8" stroke-dasharray="5 4"/>`).join('');
-$('speed').innerHTML=`<text x="65" y="22">Horizontal speed (m/s)</text>${ygrid}<line x1="65" y1="40" x2="65" y2="205" stroke="#aaa"/>${tickCurves}${tickVideo}${tickBridges}<line x1="${X(r.x)}" x2="${X(r.x)}" y1="35" y2="205" stroke="#eee" stroke-dasharray="4 4"/><text x="65" y="230">0 m</text><text x="890" y="230">${xMax.toFixed(1)} m</text>`}
+let tickVideo=videoVelocityEstimate.length?`<path d="${path(videoVelocityEstimate,z=>X(z.x),z=>V(z.speed),1)}" fill="none" stroke="#6fe2b0" stroke-width="2.6" stroke-dasharray="5 5"/>`:data.measured_intervals.map(z=>`<line x1="${X(data.roller_start_x+z.x_start_m)}" x2="${X(data.roller_start_x+z.x_end_m)}" y1="${V(z.interval_avg_speed_mps)}" y2="${V(z.interval_avg_speed_mps)}" stroke="#6fe2b0" stroke-width="1.8" stroke-dasharray="5 4"/>`).join('');
+$('speed').innerHTML=`<text x="65" y="22">Horizontal speed (m/s)</text>${ygrid}<line x1="65" y1="40" x2="65" y2="205" stroke="#aaa"/>${tickCurves}${tickVideo}${tickBridges}<line x1="${X(r.x)}" x2="${X(r.x)}" y1="35" y2="205" stroke="#eee" stroke-dasharray="4 4"/><text x="65" y="230">${xMin.toFixed(1)} m</text><text x="890" y="230">${xMax.toFixed(1)} m</text>`}
 function pause(){playing=false;if(raf)cancelAnimationFrame(raf);raf=0;lastStamp=null;$('play').textContent='Play'}function tick(stamp){if(!playing)return;if(lastStamp!==null)playTime+=(stamp-lastStamp)/1000*Number($('rate').value);lastStamp=stamp;let max=current.at(-1).t;if(playTime>=max){playTime=max;pause()}$('seek').value=Math.round(playTime/max*1000);render();if(playing)raf=requestAnimationFrame(tick)}
-function update(){pause();try{current=simulateWithVideoBridge(p);playTime=0;$('seek').value=0;render()}catch(e){$('status').textContent='Simulation error: '+e.message}}
+function update(){pause();try{current=simulateWithVideoBridge(p);$('cyclistLoaded').textContent='Loaded: '+$('cyclistName').value.trim()+' · simulated start '+current[0].x.toFixed(2)+' m at '+current[0].speed.toFixed(2)+' m/s';playTime=0;$('seek').value=0;render()}catch(e){$('status').textContent='Simulation error: '+e.message}}
 function refreshControls(){defs.forEach(([key])=>{$('c_'+key).value=p[key];$('o_'+key).textContent=p[key]+(defs.find(d=>d[0]===key)?.[2] ? ' '+defs.find(d=>d[0]===key)[2] : '')})}
 function setPreset(key){p={...defaults};if(key==='passive')p.pump_scale=0;if(key==='mistimed')p.pump_shift_m=5;if(key==='lowrr')p.C_rr=.004;if(key==='highrr')p.C_rr=.02;if(key==='lightbike')p.bike_mass=9;if(key==='highpower')p.pedal_power=1000;if(key==='highamp')p.pump_scale=1.5;refreshControls();update()}
-function makeSensitivity(){let rows=[];for(let [key,name,unit,min,max] of defs){if(key==='pedal_force_cap')continue;try{let low=simulateWithVideoBridge({...p,[key]:min}),high=simulateWithVideoBridge({...p,[key]:max}),a=summary(low),b=summary(high);rows.push([name,(b.entry-a.entry).toFixed(2),(b.exit-b.entry-a.exit+a.entry).toFixed(2),(b.total-a.total).toFixed(2)])}catch(e){rows.push([name,'—','—','—'])}}$('sensitivity').innerHTML='<table><thead><tr><th>Parameter</th><th>Δ entry speed (m/s)</th><th>Δ roller gain (m/s)</th><th>Δ total time (s)</th></tr></thead><tbody>'+rows.map(a=>'<tr>'+a.map(x=>'<td>'+x+'</td>').join('')+'</tr>').join('')+'</tbody></table>'}
-async function init(){try{let cyclist=$('cyclistName').value.trim();if(!/^[A-Za-z0-9_-]+$/.test(cyclist))throw Error('Invalid cyclist folder name');let res=await fetch('bmx_outputs/'+cyclist+'/bmx_dashboard_data.json',{cache:'no-store'});if(!res.ok)throw Error('Missing generated JSON for '+cyclist+'. Check that bmx_outputs/'+cyclist+'/bmx_dashboard_data.json is uploaded alongside index.html.');data=await res.json();$('cyclistLoaded').textContent='Loaded';
+const tradeoffs={
+ pedal_power:'Raises ramp entry speed; greater speed also increases aerodynamic drag and contact-force demand.',
+ pump_scale:'Larger COM motion can increase pumping gain, but requires more actuator power and may reduce contact load.',
+ pump_shift_m:'COM timing relative to terrain can increase or decrease forward gain; an unfavorable phase can slow the rider.',
+ m_r:'With fixed absolute ramp power, greater rider mass reduces acceleration; prescribed COM motion also changes required force.',
+ bike_mass:'Changes the translating mass and inertia; its influence depends on the relative rider and bike masses.',
+ C_rr:'Rolling losses increase with contact load; aggressive pumping can raise the tire-resistance penalty.',
+ CdA:'Aerodynamic drag increases with the square of path speed, making it especially important at higher speeds.'
+};
+function renderLiveBars(r){
+ const items=[
+  ['Crank power',r.pedal_power,1200,'W','#87c6ff'],
+  ['Pump power',r.pump_power,3000,'W','#f6ba72'],
+  ['Aero loss',r.drag_power,3000,'W','#6fe2b0'],
+  ['Rolling loss',r.rolling_power,1500,'W','#a6d3b4']
+ ];
+ const bar=(label,val,scale,unit,color)=>{
+   const value=Number.isFinite(val)?val:0;
+   const pct=Math.min(100,100*Math.abs(value)/scale);
+   return `<div class="live-bar-row"><span class="live-bar-name">${label}</span>`+
+   `<div class="live-bar-track" role="meter" aria-label="${label}" aria-valuemin="0" aria-valuemax="${scale}" aria-valuenow="${Math.min(scale,Math.abs(value)).toFixed(0)}">`+
+   `<div class="live-bar-fill" style="width:${pct.toFixed(2)}%;background:${color}"></div></div>`+
+   `<span class="live-bar-value">${value.toFixed(0)} ${unit}</span></div>`;
+ };
+ const rollingMass=p.bike_mass+p.I_w/(p.r_w*p.r_w);
+ $('live').innerHTML=`<div class="live-bars">${items.map(a=>bar(...a)).join('')}</div>`+
+ `<div class="live-bar-divider"></div>`+
+ `<div class="live-bar-row"><span class="live-bar-name">Contact load</span><span></span><span class="live-bar-value">${r.normal_load.toFixed(0)} N</span></div>`+
+ `<div class="live-bar-row"><span class="live-bar-name">Rolling mass</span><span></span><span class="live-bar-value">${rollingMass.toFixed(2)} kg</span></div>`+
+ `<div class="live-bar-divider"></div>`+
+ `<div class="live-bar-details">Time: ${r.t.toFixed(2)} s · x: ${r.x.toFixed(2)} m · Horizontal speed: ${r.speed.toFixed(2)} m/s · Path speed: ${r.path_speed.toFixed(2)} m/s<br>`+
+ `q: ${r.q.toFixed(3)} m · qₓ: ${r.q_x.toFixed(3)} · q̇: ${r.qdot.toFixed(3)} m/s · q̈: ${r.qddot.toFixed(2)} m/s²</div>`;
+}
+
+function makeSensitivity(){
+ const rows=[];
+ const simulateForSensitivity=simulateWithVideoBridge;
+ // Classify the magnitude of each section's elapsed-time response,
+ // relative to the slower of the two compared scenarios.
+ const importance=(a,b)=>{
+   if(!Number.isFinite(a)||!Number.isFinite(b))return {label:'—',css:''};
+   const pct=100*Math.abs(b-a)/Math.max(Math.abs(a),Math.abs(b),1e-9);
+   if(pct<1)return {label:'Low',css:'low'};
+   if(pct<5)return {label:'Medium',css:'medium'};
+   return {label:'High',css:'high'};
+ };
+ const pill=(a,b)=>{
+   const v=importance(a,b);
+   return `<span class="importance-pill ${v.css}" title="Time difference: ${(b-a).toFixed(3)} s">${v.label}</span>`;
+ };
+ for(const [key,name,unit,min,max,step] of defs){
+   if(key==='pedal_force_cap')continue;
+   try{
+     let lowValue=min,highValue=max,low,high,lowAvg,highAvg;
+     if(key==='pump_shift_m'){
+       // Find extreme overall average speeds across all slider-selectable shifts.
+       const trials=[];
+       const n=Math.round((max-min)/step);
+       for(let i=0;i<=n;i++){
+         const shift=Number((min+i*step).toFixed(8));
+         try{
+           const sim=simulateForSensitivity({...p,[key]:shift});
+           const distance=sim.at(-1).x-sim[0].x;
+           const elapsed=sim.at(-1).t-sim[0].t;
+           if(distance>0&&elapsed>0&&Number.isFinite(elapsed))
+             trials.push({shift,sim,avg:distance/elapsed});
+         }catch(err){}
+       }
+       if(!trials.length)throw Error('No valid COM shift simulations');
+       trials.sort((a,b)=>a.avg-b.avg);
+       low=trials[0].sim;high=trials.at(-1).sim;
+       lowValue=trials[0].shift;highValue=trials.at(-1).shift;
+       lowAvg=trials[0].avg;highAvg=trials.at(-1).avg;
+     }else{
+       low=simulateForSensitivity({...p,[key]:min});
+       high=simulateForSensitivity({...p,[key]:max});
+     }
+     const a=summary(low),b=summary(high);
+     const detail=key==='pump_shift_m'
+       ?`<div class="muted" style="font-size:12px;margin-top:5px">Lowest average speed: ${lowValue.toFixed(2)} m (${lowAvg.toFixed(2)} m/s); highest: ${highValue.toFixed(2)} m (${highAvg.toFixed(2)} m/s). Δ average velocity: +${(highAvg-lowAvg).toFixed(2)} m/s.</div>`
+       :'';
+     rows.push([name+detail,pill(a.ramp,b.ramp),pill(a.roller,b.roller),pill(a.total,b.total),`<span class="tradeoff-cell">${tradeoffs[key]||"—"}</span>`]);
+   }catch(e){rows.push([name,'—','—','—',`<span class="tradeoff-cell">${tradeoffs[key]||'—'}</span>`])}
+ }
+ $('sensitivity').innerHTML='<table><thead><tr><th>Parameter</th><th>Ramp</th><th>Pumping section</th><th>Overall</th><th>Main tradeoff</th></tr></thead><tbody>'+
+ rows.map(a=>'<tr>'+a.map(x=>'<td>'+x+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+}
+
+
+async function init(){try{let cyclist=$('cyclistName').value.trim();if(!/^[A-Za-z0-9_-]+$/.test(cyclist))throw Error('Invalid cyclist folder name');let res=await fetch('bmx_outputs/'+cyclist+'/bmx_dashboard_data.json',{cache:'no-store'});if(!res.ok)throw Error('Missing generated JSON for '+cyclist+'. Upload bmx_outputs/'+cyclist+'/bmx_dashboard_data.json beside index.html in the website repository.');data=await res.json();buildVideoVelocityEstimate();$('cyclistLoaded').textContent='Loading '+cyclist+'…';
  // Sponsor view: SG15 is fixed; alternative fits remain in the Python research outputs.
  if(!data.com_profiles?.sg15)throw Error('SG15 COM profile missing. Regenerate dashboard JSON with the physics script.');
  data.com=data.com_profiles.sg15;
-defaults.q0=data.com.q[0];p.q0=defaults.q0;baselineP.q0=defaults.q0;$('controls').innerHTML=defs.map(([key,label,unit,min,max,step])=>`<label>${label} <output id="o_${key}"></output><input type="range" id="c_${key}" min="${min}" max="${max}" step="${step}"></label>`).join('');defs.forEach(([key])=>$('c_'+key).addEventListener('input',e=>{p[key]=Number(e.target.value);$('o_'+key).textContent=p[key]+(defs.find(d=>d[0]===key)?.[2] ? ' '+defs.find(d=>d[0]===key)[2] : '');$('preset').value='custom';update()}));passive=simulateWithVideoBridge({...defaults,pump_scale:0});baseline=simulateWithVideoBridge(defaults);refreshControls();update();makeSensitivity();$('validation').innerHTML='<table><tr><th>x interval (m)</th><th>Mean speed (m/s)</th></tr>'+data.measured_intervals.map(z=>`<tr><td>${z.x_start_m.toFixed(1)}–${z.x_end_m.toFixed(1)}</td><td>${z.interval_avg_speed_mps.toFixed(2)}</td></tr>`).join('')+'</table>'}catch(e){$('status').textContent=e.message}}
-$('cyclistName').onchange=()=>{pause();playTime=0;current=null;init()};$('play').onclick=()=>{if(playing){pause();return}if(!current)return;if(playTime>=current.at(-1).t){playTime=0;$('seek').value=0}playing=true;lastStamp=null;$('play').textContent='Pause';raf=requestAnimationFrame(tick)};$('reset').onclick=()=>{pause();playTime=0;$('seek').value=0;render()};$('seek').oninput=()=>{pause();if(current){playTime=Number($('seek').value)/1000*current.at(-1).t;render()}};$('preset').onchange=e=>{if(e.target.value!=='custom')setPreset(e.target.value)};$('freeze').onclick=()=>{baseline=simulateWithVideoBridge(p);baselineP={...p};$('baselineName').textContent='Baseline: frozen custom scenario';render()};$('load').onclick=()=>{p={...baselineP};refreshControls();$('preset').value='custom';update()};$('restore').onclick=()=>{baseline=simulateWithVideoBridge(defaults);baselineP={...defaults};$('baselineName').textContent='Baseline: default';render()};init();
+defaults.q0=data.com.q[0];p={...defaults};baselineP={...defaults};$('preset').value='default';$('baselineName').textContent='Baseline: default';$('controls').innerHTML=defs.map(([key,label,unit,min,max,step])=>`<label>${label} <output id="o_${key}"></output><input type="range" id="c_${key}" min="${min}" max="${max}" step="${step}"></label>`).join('');defs.forEach(([key])=>$('c_'+key).addEventListener('input',e=>{p[key]=Number(e.target.value);$('o_'+key).textContent=p[key]+(defs.find(d=>d[0]===key)?.[2] ? ' '+defs.find(d=>d[0]===key)[2] : '');$('preset').value='custom';update()}));passive=simulateWithVideoBridge({...defaults,pump_scale:0});baseline=simulateWithVideoBridge(defaults);refreshControls();update();makeSensitivity();}catch(e){$('status').textContent=e.message;$('cyclistLoaded').textContent='Could not load cyclist';}}
+$('downloadVelocityCsv').onclick=downloadVelocityCsv; $('cyclistName').onchange=()=>{pause();playTime=0;current=null;baseline=null;init()};$('play').onclick=()=>{if(playing){pause();return}if(!current)return;if(playTime>=current.at(-1).t){playTime=0;$('seek').value=0}playing=true;lastStamp=null;$('play').textContent='Pause';raf=requestAnimationFrame(tick)};$('reset').onclick=()=>{pause();playTime=0;$('seek').value=0;render()};$('seek').oninput=()=>{pause();if(current){playTime=Number($('seek').value)/1000*current.at(-1).t;render()}};$('preset').onchange=e=>{if(e.target.value!=='custom')setPreset(e.target.value)};$('freeze').onclick=()=>{baseline=simulateWithVideoBridge(p);baselineP={...p};$('baselineName').textContent='Baseline: frozen custom scenario';render()};$('load').onclick=()=>{p={...baselineP};refreshControls();$('preset').value='custom';update()};$('restore').onclick=()=>{baseline=simulateWithVideoBridge(defaults);baselineP={...defaults};$('baselineName').textContent='Baseline: default';render()};init();
 </script></body></html>
