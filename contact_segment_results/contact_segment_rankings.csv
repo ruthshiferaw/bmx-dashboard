@@ -1,0 +1,5 @@
+segment,start_x_m,end_x_m,observed_order,calculated_order,full_order_match,pairwise_correct,pairwise_total
+1,36.25,42.25,P3 > P2 > P1,P3 > P2 > P1,True,3,3
+2,45.5,60.0,P3 > P2 > P1,P3 > P1 > P2,False,2,3
+3,66.25,69.5,P3 > P1 > P2,P3 > P2 > P1,False,2,3
+4,73.25,82.25,P2 > P3 > P1,P3 > P2 > P1,False,2,3
